@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Bonus Calculator</title>
+<style>
+body { font-family: sans-serif; padding: 16px; max-width: 700px; margin: 0 auto; background: #f9f9f9; color: #111; }
+.card { border: 1px solid #e2e2e2; border-radius: 10px; padding: 16px; margin-bottom: 12px; background: #fff; }
+.card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #888; margin: 0 0 12px; }
+.row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+label { font-size: 13px; color: #555; min-width: 155px; }
+input[type=text], input[type=number], select { font-size: 13px; padding: 5px 8px; border: 1px solid #ccc; border-radius: 6px; background: #fafafa; }
+input[type=number] { width: 80px; }
+select { width: 240px; }
+.hm-input { width: 70px; text-align: center; font-variant-numeric: tabular-nums; }
+.tag { font-size: 11px; background: #f0f0f0; border-radius: 6px; padding: 2px 8px; color: #555; white-space: nowrap; }
+.hint { font-size: 11px; color: #aaa; }
+.rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+.rule-item { background: #f5f5f5; border-radius: 8px; padding: 8px 12px; }
+.rule-label { font-size: 11px; color: #888; margin-bottom: 2px; }
+.rule-val { font-size: 14px; font-weight: 600; color: #111; }
+.rule-sub { font-size: 11px; color: #aaa; margin-top: 1px; }
+.grid3 { display: grid; grid-template-columns: 1fr 80px 120px 32px; gap: 8px; align-items: center; margin-bottom: 8px; }
+.grid2h { display: grid; grid-template-columns: 1fr 80px 120px 32px; gap: 8px; align-items: center; margin-bottom: 8px; }
+.hdr { font-size: 11px; color: #888; }
+.add-btn { font-size: 12px; padding: 4px 10px; cursor: pointer; border: 1px solid #ccc; border-radius: 6px; background: #fafafa; margin-top: 4px; }
+.rm-btn { font-size: 11px; padding: 3px 7px; cursor: pointer; border: 1px solid #fca5a5; border-radius: 6px; background: #fff0f0; color: #c00; }
+.prow { display: flex; justify-content: space-between; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid #eee; }
+.prow:last-child { border-bottom: none; }
+.pname { font-size: 14px; font-weight: 600; }
+.psub { font-size: 11px; color: #777; margin-top: 2px; }
+.pamt { font-size: 17px; font-weight: 600; white-space: nowrap; margin-left: 10px; }
+.badge { font-size: 10px; padding: 1px 7px; border-radius: 20px; margin-left: 5px; font-weight: 500; }
+.bl { background: #dbeafe; color: #1d4ed8; }
+.ba { background: #fef3c7; color: #92400e; }
+.sumgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 12px; }
+.sum { background: #f7f7f7; border-radius: 8px; padding: 10px 12px; }
+.slbl { font-size: 11px; color: #888; margin-bottom: 3px; }
+.sval { font-size: 20px; font-weight: 600; }
+.ssub { font-size: 11px; color: #aaa; margin-top: 2px; }
+.divider { height: 1px; background: #eee; margin: 10px 0; }
+.alert { border-radius: 8px; padding: 8px 12px; font-size: 12px; margin-bottom: 8px; display: none; }
+.alert-yellow { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+.alert-red { background: #fff0f0; border: 1px solid #fca5a5; color: #c00; }
+.input-err { border-color: #fca5a5 !important; background: #fff5f5 !important; }
+.hours-tracker { font-size: 12px; color: #555; margin-top: 6px; padding: 6px 10px; background: #f5f5f5; border-radius: 6px; }
+.hours-tracker.ok { background: #f0fdf4; color: #166534; }
+.hours-tracker.over { background: #fff0f0; color: #c00; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <p class="card-title">Bonus Rules</p>
+  <div class="rules-grid">
+    <div class="rule-item">
+      <div class="rule-label">Completion bonus (leads only)</div>
+      <div class="rule-val">$250</div>
+      <div class="rule-sub">QC pass + on time, split by hrs worked</div>
+    </div>
+    <div class="rule-item">
+      <div class="rule-label">Early finish — Lead</div>
+      <div class="rule-val">$350</div>
+      <div class="rule-sub">Flat per lead (2-person team only)</div>
+    </div>
+    <div class="rule-item">
+      <div class="rule-label">Early finish — Helper</div>
+      <div class="rule-val">$250</div>
+      <div class="rule-sub">Flat per helper (2-person team only)</div>
+    </div>
+    <div class="rule-item">
+      <div class="rule-label">1-day job bonus</div>
+      <div class="rule-val">+$250</div>
+      <div class="rule-sub">Everyone, regardless of early finish</div>
+    </div>
+    <div class="rule-item">
+      <div class="rule-label">3-person team early finish</div>
+      <div class="rule-val">$250</div>
+      <div class="rule-sub">Everyone — replaces lead/helper bonuses</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <p class="card-title">Job Settings</p>
+  <div class="row">
+    <label>Hours quoted for job</label>
+    <input type="text" id="quotedHours" value="70" class="hm-input" oninput="calc()" placeholder="h:mm">
+    <span class="tag" id="quotedDayTag">5 days</span>
+  </div>
+  <div class="row">
+    <label>Total hours on job</label>
+    <input type="text" id="jobHours" value="70" class="hm-input" oninput="calc()" placeholder="h:mm">
+    <span class="tag" id="jobDayTag">5 days</span>
+  </div>
+  <div class="row">
+    <label>Finished early?</label>
+    <label style="min-width:unset;display:flex;align-items:center;gap:5px;font-size:13px;color:#555;cursor:pointer;">
+      <input type="checkbox" id="earlyFinish" onchange="calc()"> Yes
+    </label>
+    <label style="min-width:unset;display:flex;align-items:center;gap:5px;font-size:12px;color:#555;cursor:pointer;">
+      <input type="checkbox" id="oneDayCheck" onchange="calc()"> Finished in 1 day
+    </label>
+  </div>
+  <div id="oneDayNote" class="alert alert-yellow">
+    1-day job — everyone receives an additional $250 bonus.
+  </div>
+  <p class="hint" style="margin:4px 0 0;">Enter time as h:mm (e.g. 1:30 = 1 hr 30 min) or plain hours (e.g. 14)</p>
+</div>
+
+<div class="card">
+  <p class="card-title">Leads</p>
+  <div class="grid3" style="margin-bottom:4px;">
+    <span class="hdr">Name</span><span class="hdr">Rate ($/hr)</span><span class="hdr">Time on job</span><span></span>
+  </div>
+  <div id="leadsContainer"></div>
+  <button class="add-btn" onclick="addLead()">+ Add lead</button>
+</div>
+
+<div class="card">
+  <p class="card-title">Helpers <span class="badge ba">Company added</span></p>
+  <div class="grid2h" style="margin-bottom:4px;">
+    <span class="hdr">Name</span><span class="hdr">Rate ($/hr)</span><span class="hdr">Time on job</span><span></span>
+  </div>
+  <div id="helpersContainer"></div>
+  <button class="add-btn" onclick="addHelper()">+ Add helper</button>
+  <div id="hoursTracker" class="hours-tracker" style="display:none;"></div>
+  <div id="hoursError" class="alert alert-red" style="margin-top:8px;"></div>
+</div>
+
+<div class="card">
+  <p class="card-title">Payout Breakdown</p>
+  <div id="payoutList"></div>
+  <div class="divider"></div>
+  <div class="sumgrid" id="summaryCards"></div>
+</div>
+
+<script>
+var JOB_BONUS = 250;
+var LEAD_EARLY = 350;
+var HELPER_EARLY = 250;
+var ONE_DAY_BONUS = 250;
+var THIRD_HAND_BONUS = 250;
+
+var leads = [
+  { name: "Lead 1", rate: 25, hours: 35 },
+  { name: "Lead 2", rate: 20, hours: 35 }
+];
+var helpers = [];
+
+// Parse "h:mm" or "h.xx" or plain number into decimal hours
+function parseHM(val) {
+  var s = String(val).trim();
+  if (s.indexOf(":") !== -1) {
+    var parts = s.split(":");
+    var h = parseFloat(parts[0]) || 0;
+    var m = parseFloat(parts[1]) || 0;
+    return h + m / 60;
+  }
+  return parseFloat(s) || 0;
+}
+
+// Format for display in input fields - plain number if whole or .5, otherwise h:mm
+function fmtInput(decHours) {
+  if (!decHours || decHours <= 0) return "0";
+  var h = Math.floor(decHours);
+  var m = Math.round((decHours - h) * 60);
+  if (m === 0) return String(h);
+  if (m === 30) return h + ".5";
+  return h + ":" + (m < 10 ? "0" : "") + m;
+}
+
+// Format decimal hours as h:mm for display in labels/summaries
+function fmtHM(decHours) {
+  if (!decHours || decHours <= 0) return "0:00";
+  var h = Math.floor(decHours);
+  var m = Math.round((decHours - h) * 60);
+  if (m === 60) { h++; m = 0; }
+  return h + ":" + (m < 10 ? "0" : "") + m;
+}
+
+function hoursToDays(h) {
+  if (h <= 0) return 0;
+  var full = Math.floor(h / 14);
+  var rem = h % 14;
+  return rem === 0 ? full : (rem < 4.4 ? full : full + 1);
+}
+
+function getJobHours() { return parseHM(document.getElementById("jobHours").value); }
+
+function addLead() { leads.push({ name: "Lead " + (leads.length + 1), rate: 20, hours: 0 }); renderInputs(); calc(); }
+function removeLead(i) { if (leads.length <= 1) return; leads.splice(i, 1); renderInputs(); calc(); }
+function addHelper() { helpers.push({ name: "Helper " + (helpers.length + 1), rate: 18, hours: 0 }); renderInputs(); calc(); }
+function removeHelper(i) { helpers.splice(i, 1); renderInputs(); calc(); }
+
+function renderInputs() {
+  var jobHours = getJobHours();
+  var lc = document.getElementById("leadsContainer");
+  var lhtml = "";
+  for (var i = 0; i < leads.length; i++) {
+    var l = leads[i];
+    var d = hoursToDays(l.hours);
+    var over = jobHours > 0 && l.hours > jobHours;
+    lhtml += '<div class="grid3">' +
+      '<input type="text" value="' + l.name + '" data-li="' + i + '" oninput="leads[parseInt(this.dataset.li)].name=this.value;calc()" style="width:100%;min-width:0;">' +
+      '<input type="number" value="' + l.rate + '" min="1" step="0.5" data-li="' + i + '" oninput="leads[parseInt(this.dataset.li)].rate=parseFloat(this.value)||0;calc()" style="width:70px;">' +
+      '<div style="display:flex;align-items:center;gap:5px;">' +
+        '<input type="text" value="' + fmtInput(l.hours) + '" placeholder="h:mm" class="hm-input ' + (over ? 'input-err' : '') + '" data-li="' + i + '" data-hrfield="' + i + '" data-role="lead"' +
+          ' oninput="leads[parseInt(this.dataset.li)].hours=parseHM(this.value);calc()">' +
+      '</div>' +
+      (leads.length > 1 ? '<button class="rm-btn" data-li="' + i + '" onclick="removeLead(parseInt(this.dataset.li))">x</button>' : '<span></span>') +
+      '</div>';
+  }
+  lc.innerHTML = lhtml;
+
+  var hc = document.getElementById("helpersContainer");
+  var hhtml = "";
+  for (var j = 0; j < helpers.length; j++) {
+    var h = helpers[j];
+    var hd = hoursToDays(h.hours);
+    var hover = jobHours > 0 && h.hours > jobHours;
+    hhtml += '<div class="grid2h">' +
+      '<input type="text" value="' + h.name + '" data-hi="' + j + '" oninput="helpers[parseInt(this.dataset.hi)].name=this.value;calc()" style="width:100%;min-width:0;">' +
+      '<input type="number" value="' + h.rate + '" min="1" step="0.5" data-hi="' + j + '" oninput="helpers[parseInt(this.dataset.hi)].rate=parseFloat(this.value)||0;calc()" style="width:70px;">' +
+      '<div style="display:flex;align-items:center;gap:5px;">' +
+        '<input type="text" value="' + fmtInput(h.hours) + '" placeholder="h:mm" class="hm-input ' + (hover ? 'input-err' : '') + '" data-hi="' + j + '" data-hrfield="' + j + '" data-role="helper"' +
+          ' oninput="helpers[parseInt(this.dataset.hi)].hours=parseHM(this.value);calc()">' +
+      '</div>' +
+      '<button class="rm-btn" data-hi="' + j + '" onclick="removeHelper(parseInt(this.dataset.hi))">x</button>' +
+      '</div>';
+  }
+  if (helpers.length === 0) hhtml = '<p style="font-size:12px;color:#aaa;margin:4px 0 8px;">No helpers added.</p>';
+  hc.innerHTML = hhtml;
+}
+
+function fmtD(n) {
+  return "$" + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function calc() {
+  var jobHours = getJobHours();
+  var quotedHours = parseHM(document.getElementById("quotedHours").value);
+  var isEarly = document.getElementById("earlyFinish").checked;
+  var jobDays = hoursToDays(jobHours);
+  var quotedDays = hoursToDays(quotedHours);
+  var isOneDay = document.getElementById("oneDayCheck").checked;
+
+  document.getElementById("jobDayTag").textContent = jobDays + " day" + (jobDays !== 1 ? "s" : "");
+  document.getElementById("quotedDayTag").textContent = quotedDays + " day" + (quotedDays !== 1 ? "s" : "");
+  document.getElementById("oneDayNote").style.display = isOneDay ? "block" : "none";
+
+  // Hours validation
+  var totalLeadHours = leads.reduce(function(s, l) { return s + l.hours; }, 0);
+  var totalHelperHours = helpers.reduce(function(s, h) { return s + h.hours; }, 0);
+  var totalAllHours = totalLeadHours + totalHelperHours;
+  var anyLeadOver = leads.some(function(l) { return jobHours > 0 && l.hours > jobHours + 0.01; });
+  var anyHelperOver = helpers.some(function(h) { return jobHours > 0 && h.hours > jobHours + 0.01; });
+
+  var tracker = document.getElementById("hoursTracker");
+  var errBox = document.getElementById("hoursError");
+
+  if (jobHours > 0 && (leads.length > 0 || helpers.length > 0)) {
+    var diff = Math.round((totalAllHours - jobHours) * 100) / 100;
+    tracker.style.display = "block";
+    if (Math.abs(diff) < 0.02) {
+      tracker.className = "hours-tracker ok";
+      tracker.textContent = "Hours add up: " + fmtHM(totalAllHours) + " / " + fmtHM(jobHours);
+    } else if (diff > 0) {
+      tracker.className = "hours-tracker over";
+      tracker.textContent = "Over by " + fmtHM(diff) + ": " + fmtHM(totalAllHours) + " assigned / " + fmtHM(jobHours) + " total";
+    } else {
+      tracker.className = "hours-tracker";
+      tracker.textContent = fmtHM(Math.abs(diff)) + " unassigned (" + fmtHM(totalAllHours) + " / " + fmtHM(jobHours) + " assigned)";
+    }
+  } else {
+    tracker.style.display = "none";
+  }
+
+  var errors = [];
+  if (anyLeadOver || anyHelperOver) errors.push("One or more individual times exceed total job time (" + fmtHM(jobHours) + ").");
+  if (jobHours > 0 && totalAllHours > jobHours + 0.01) errors.push("Total assigned time (" + fmtHM(totalAllHours) + ") exceeds job time (" + fmtHM(jobHours) + "). Please adjust.");
+  errBox.style.display = errors.length > 0 ? "block" : "none";
+  errBox.textContent = errors.join(" ");
+
+  // Update error styling on existing inputs without re-rendering
+  document.querySelectorAll("#leadsContainer input[data-hrfield]").forEach(function(inp) {
+    var i = parseInt(inp.dataset.hrfield);
+    var over = jobHours > 0 && leads[i] && leads[i].hours > jobHours + 0.01;
+    inp.className = "hm-input" + (over ? " input-err" : "");
+  });
+  document.querySelectorAll("#helpersContainer input[data-hrfield]").forEach(function(inp) {
+    var i = parseInt(inp.dataset.hrfield);
+    var over = jobHours > 0 && helpers[i] && helpers[i].hours > jobHours + 0.01;
+    inp.className = "hm-input" + (over ? " input-err" : "");
+  });
+
+  var activeLeads = leads.filter(function(l) { return l.hours > 0; });
+  var activeLeadHours = activeLeads.reduce(function(s, l) { return s + l.hours; }, 0);
+
+  var payouts = {};
+  leads.forEach(function(l) {
+    payouts[l.name] = { completion: 0, early: 0, oneday: 0, thirdhand: 0, rate: l.rate, role: "Lead", hours: l.hours, days: hoursToDays(l.hours) };
+  });
+  helpers.forEach(function(h) {
+    payouts[h.name] = { completion: 0, early: 0, oneday: 0, thirdhand: 0, rate: h.rate, role: "Helper", hours: h.hours, days: hoursToDays(h.hours) };
+  });
+
+  // Only award completion bonus if job hours did not exceed quoted hours
+  var completionEligible = quotedHours <= 0 || jobHours <= quotedHours + 0.01;
+  activeLeads.forEach(function(l) {
+    payouts[l.name].completion = (completionEligible && activeLeadHours > 0) ? (l.hours / activeLeadHours) * JOB_BONUS : 0;
+  });
+
+  var activeWorkerCount = leads.filter(function(l) { return l.hours > 0; }).length +
+                          helpers.filter(function(h) { return h.hours > 0; }).length;
+  var isThirdHand = activeWorkerCount >= 3;
+
+  if (isEarly) {
+    if (isThirdHand) {
+      // 3+ people: only the flat $250 everyone bonus, no individual lead/helper bonuses
+      leads.forEach(function(l) { if (l.hours > 0) payouts[l.name].thirdhand = THIRD_HAND_BONUS; });
+      helpers.forEach(function(h) { if (h.hours > 0) payouts[h.name].thirdhand = THIRD_HAND_BONUS; });
+    } else {
+      // Standard team: lead $350, helper $250
+      leads.forEach(function(l) { if (l.hours > 0) payouts[l.name].early = LEAD_EARLY; });
+      helpers.forEach(function(h) { if (h.hours > 0) payouts[h.name].early = HELPER_EARLY; });
+    }
+  }
+
+  if (isOneDay) {
+    leads.forEach(function(l) { if (l.hours > 0) payouts[l.name].oneday = ONE_DAY_BONUS; });
+    helpers.forEach(function(h) { if (h.hours > 0) payouts[h.name].oneday = ONE_DAY_BONUS; });
+  }
+
+  var rows = "";
+  var totalOut = 0, earlyTotal = 0, completionTotal = 0, onedayTotal = 0, thirdhandTotal = 0;
+
+  Object.keys(payouts).forEach(function(name) {
+    var p = payouts[name];
+    var total = p.completion + p.early + p.oneday + p.thirdhand;
+    if (total === 0 && (p.role === "Lead" || p.hours === 0)) return;
+    totalOut += total;
+    earlyTotal += p.early;
+    completionTotal += p.completion;
+    onedayTotal += p.oneday;
+    thirdhandTotal += p.thirdhand;
+    var parts = [];
+    if (p.completion > 0) parts.push("Completion: " + fmtD(p.completion));
+    if (p.early > 0) parts.push("Early finish: " + fmtD(p.early));
+    if (p.thirdhand > 0) parts.push("3-person bonus: " + fmtD(p.thirdhand));
+    if (p.oneday > 0) parts.push("1-day bonus: " + fmtD(p.oneday));
+    if (parts.length === 0) parts.push("No bonus this job");
+    var timeNote = p.hours > 0 ? fmtHM(p.hours) : "";
+    var badge = p.role === "Lead" ? '<span class="badge bl">Lead</span>' : '<span class="badge ba">Helper</span>';
+    rows += '<div class="prow"><div><div class="pname">' + name + badge + '</div><div class="psub">' + parts.join(" &middot; ") + (timeNote ? " &middot; " + timeNote : "") + '</div></div><div class="pamt">' + fmtD(total) + '</div></div>';
+  });
+
+  document.getElementById("payoutList").innerHTML = rows || '<p style="font-size:13px;color:#999;">No payouts to display.</p>';
+
+  var sumHTML =
+    '<div class="sum"><div class="slbl">Total paid out</div><div class="sval">' + fmtD(totalOut) + '</div></div>' +
+    '<div class="sum"><div class="slbl">Completion pool</div><div class="sval">' + fmtD(completionTotal) + '</div><div class="ssub">$250 split by hrs (leads)</div></div>' +
+    '<div class="sum"><div class="slbl">Early finish</div><div class="sval">' + fmtD(earlyTotal) + '</div><div class="ssub">Leads $350 / Helpers $250</div></div>';
+  if (thirdhandTotal > 0) {
+    sumHTML += '<div class="sum"><div class="slbl">3-person bonus</div><div class="sval">' + fmtD(thirdhandTotal) + '</div><div class="ssub">+$250 everyone</div></div>';
+  }
+  if (onedayTotal > 0) {
+    sumHTML += '<div class="sum"><div class="slbl">1-day bonus</div><div class="sval">' + fmtD(onedayTotal) + '</div><div class="ssub">+$250 everyone</div></div>';
+  }
+  sumHTML += '<div class="sum"><div class="slbl">Quoted time</div><div class="sval">' + fmtHM(quotedHours) + '</div><div class="ssub">' + quotedDays + ' day' + (quotedDays !== 1 ? "s" : "") + ' quoted</div></div>';
+  sumHTML += '<div class="sum"><div class="slbl">Actual time</div><div class="sval">' + fmtHM(jobHours) + '</div><div class="ssub">' + jobDays + ' day' + (jobDays !== 1 ? "s" : "") + ' actual</div></div>';
+  document.getElementById("summaryCards").innerHTML = sumHTML;
+}
+
+renderInputs();
+calc();
+</script>
+</body>
+</html>
